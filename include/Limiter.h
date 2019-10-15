@@ -6,6 +6,10 @@
 #include <typeinfo>
 #include <unistd.h>
 
+//123
+#include <iostream>
+//123
+
 //if no notice, all the time unit is us
 namespace token_bucket {
 typedef uint64_t time_usec;
@@ -53,7 +57,7 @@ public:
     bool set_rate(double rate);
     bool set_burst(double burst);
 
-    double rate_s() {
+    double rate_us() {
         return _m_rate_us;
     }
     double burst() {
@@ -74,7 +78,7 @@ private:
     time_usec curr_time_us();
 
     
-    // rate per second
+    // rate per us 
     double _m_rate_us;
 
     // every deta_T in [start, end], there is always 
@@ -142,7 +146,7 @@ std::shared_ptr<Reservation> Limiter::reserveN(double n, time_usec max_time_to_w
         _m_tokens -= n;
         reservation_p->m_ok = true;
         reservation_p->m_tokens = n;
-        reservation_p->m_time_to_act_us = _m_tokens >= 0 ? 0 : tokens_to_duration(-_m_tokens) + now;
+        reservation_p->m_time_to_act_us = _m_tokens >= 0 ? now : tokens_to_duration(-_m_tokens) + now;
         _m_last_event_time_us = reservation_p->m_time_to_act_us;
     }
     return reservation_p;
@@ -154,22 +158,20 @@ std::shared_ptr<Reservation> Limiter::reserve(time_usec max_time_to_wait) {
 
 bool Limiter::waitN(double n, time_usec max_time_to_wait) {
     std::shared_ptr<Reservation> reservation_p = reserveN(n, max_time_to_wait);
-    time_usec sleep_time_us = reservation_p->m_time_to_act_us - curr_time_us();
-    if (reservation_p->m_ok && sleep_time_us >= 0) {
-        usleep(reservation_p->m_time_to_act_us - sleep_time_us);
-        return true;
+    time_usec curr_us = curr_time_us();
+    if (reservation_p->m_ok && reservation_p->m_time_to_act_us >= curr_us) {
+        usleep(reservation_p->m_time_to_act_us - curr_us);
     }
-    return false;
+    return reservation_p->m_ok;
 }
 
 bool Limiter::wait(time_usec max_time_to_wait) {
     std::shared_ptr<Reservation> reservation_p = reserveN(1, max_time_to_wait);
-    time_usec sleep_time_us = reservation_p->m_time_to_act_us - curr_time_us();
-    if (reservation_p->m_ok && sleep_time_us >= 0) {
-        usleep(reservation_p->m_time_to_act_us - sleep_time_us);
-        return true;
+    time_usec curr_us = curr_time_us();
+    if (reservation_p->m_ok && reservation_p->m_time_to_act_us >= curr_us) {
+        usleep(reservation_p->m_time_to_act_us - curr_us);
     }
-    return false;
+    return reservation_p->m_ok;
 }
 
 

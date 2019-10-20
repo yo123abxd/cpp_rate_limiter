@@ -13,6 +13,7 @@ A C++ header-only limiter implemented by token bucket
 /*
  * These codes below explain how to generate 3.0 tokens per second
  * and cosume 1.0 tokens every time execute your codes.
+ * you can only take 5.0 tokens each time, or waitN will return false.
  */
 #include "Limiter.h"
 #include <thread>

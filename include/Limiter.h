@@ -7,14 +7,6 @@
 #include <typeinfo>
 #include <unistd.h>
 
-<<<<<<< HEAD
-=======
-//123
-#include <iostream>
-//123
->>>>>>> dce70dfc40768f211d53cb3991cafd8ae44d2584
-
-//if no notice, all the time unit is us
 namespace token_bucket {
 
 static const uint64_t POW_S_TO_MS = 1000;
@@ -91,7 +83,7 @@ private:
 };
 
 static bool is_equal_d(double d1, double d2) {
-    static const double delta = 1e-9;
+    static const double delta = 1e-10;
     return fabs(d1 - d2) < delta;
 }
 
@@ -123,7 +115,7 @@ public:
 
 class Limiter {
 public:
-    static const double min_rate;
+    static const double MIN_RATE;
     Limiter(double rate, double burst);
     std::shared_ptr<Reservation> reserveN(double n, Time max_time_to_wait);
     std::shared_ptr<Reservation> reserve(Time max_time_to_wait);
@@ -132,13 +124,8 @@ public:
     bool set_rate(double rate);
     bool set_burst(double burst);
 
-<<<<<<< HEAD
     double rate() {
         return _m_rate;
-=======
-    double rate_us() {
-        return _m_rate_us;
->>>>>>> dce70dfc40768f211d53cb3991cafd8ae44d2584
     }
     double burst() {
         return _m_burst;
@@ -158,13 +145,8 @@ private:
     Time curr_time();
 
     
-<<<<<<< HEAD
     // rate per s 
     double _m_rate;
-=======
-    // rate per us 
-    double _m_rate_us;
->>>>>>> dce70dfc40768f211d53cb3991cafd8ae44d2584
 
     // every deta_T in [start, end], there is always 
     // deta_T * _m_rate + burst >= n
@@ -180,16 +162,17 @@ private:
     Time _m_last_event_time;
     std::mutex mu;
 };
-const double Limiter::min_rate = 1e-9;
+const double Limiter::MIN_RATE = DBL_MIN;
 
 Limiter::Limiter(double rate, double burst) : 
-        _m_last_update_time(0, Time::TIME_UNIT_S), 
+        _m_tokens(0),
+        _m_last_update_time(0, Time::TIME_UNIT_S),
         _m_last_event_time(0, Time::TIME_UNIT_S) {
     Time curr = curr_time();
     _m_last_update_time = curr;
     _m_last_event_time = curr;
     _m_burst = burst < 0.0 ? 0.0 : burst;
-    _m_rate = rate < 0.0 || is_equal_d(0.0, rate) ? DBL_MIN : rate;
+    _m_rate = rate < 0.0 || is_equal_d(0.0, rate) ? MIN_RATE : rate;
 }
 
 Time Limiter::curr_time() {
@@ -233,47 +216,30 @@ std::shared_ptr<Reservation> Limiter::reserveN(double n, Time max_time_to_wait) 
         _m_tokens -= n;
         reservation_p->m_ok = true;
         reservation_p->m_tokens = n;
-<<<<<<< HEAD
         reservation_p->m_time_to_act = _m_tokens >= 0 ? now : tokens_to_duration(-_m_tokens) + now;
         _m_last_event_time = reservation_p->m_time_to_act;
-=======
-        reservation_p->m_time_to_act_us = _m_tokens >= 0 ? now : tokens_to_duration(-_m_tokens) + now;
-        _m_last_event_time_us = reservation_p->m_time_to_act_us;
->>>>>>> dce70dfc40768f211d53cb3991cafd8ae44d2584
     }
     return reservation_p;
 }
 
 std::shared_ptr<Reservation> Limiter::reserve(Time max_time_to_wait) {
-    return reserveN(1, max_time_to_wait);
+    return reserveN(1.0, max_time_to_wait);
 }
 
 bool Limiter::waitN(double n, Time max_time_to_wait) {
     std::shared_ptr<Reservation> reservation_p = reserveN(n, max_time_to_wait);
-<<<<<<< HEAD
     Time curr_us = curr_time();
     if (reservation_p->m_ok && reservation_p->m_time_to_act >= curr_us) {
         usleep((reservation_p->m_time_to_act - curr_us).get_time_us());
-=======
-    time_usec curr_us = curr_time_us();
-    if (reservation_p->m_ok && reservation_p->m_time_to_act_us >= curr_us) {
-        usleep(reservation_p->m_time_to_act_us - curr_us);
->>>>>>> dce70dfc40768f211d53cb3991cafd8ae44d2584
     }
     return reservation_p->m_ok;
 }
 
 bool Limiter::wait(Time max_time_to_wait) {
-    std::shared_ptr<Reservation> reservation_p = reserveN(1, max_time_to_wait);
-<<<<<<< HEAD
+    std::shared_ptr<Reservation> reservation_p = reserveN(1.0, max_time_to_wait);
     Time curr_us = curr_time();
     if (reservation_p->m_ok && reservation_p->m_time_to_act >= curr_us) {
         usleep((reservation_p->m_time_to_act - curr_us).get_time_us());
-=======
-    time_usec curr_us = curr_time_us();
-    if (reservation_p->m_ok && reservation_p->m_time_to_act_us >= curr_us) {
-        usleep(reservation_p->m_time_to_act_us - curr_us);
->>>>>>> dce70dfc40768f211d53cb3991cafd8ae44d2584
     }
     return reservation_p->m_ok;
 }

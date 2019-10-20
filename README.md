@@ -14,7 +14,7 @@ A C++ header-only limiter implemented by token bucket
  * These codes below explain how to generate 3.0 tokens per second
  * and cosume 1.0 tokens every time execute your codes.
  */
-#include "../include/Limiter.h"
+#include "Limiter.h"
 #include <thread>
 
 using namespace std;
@@ -26,7 +26,7 @@ int main() {
     lim_p = new token_bucket::Limiter(3.0, 5.0);
     for(int loop_time = 0; loop_time < 5; ) {
         //waitN(cosume tokens num, max wait time/s )
-        bool ok = lim_p->wait(token_bucket::Time(20, token_bucket::Time::TIME_UNIT_S));
+        bool ok = lim_p->waitN(1.0, token_bucket::Time(20, token_bucket::Time::TIME_UNIT_S));
         if (ok) {
             /*
              * write your codes here

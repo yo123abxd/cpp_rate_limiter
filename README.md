@@ -3,9 +3,9 @@ A C++ header-only limiter implemented by token bucket
 
 ## Quick start
 
--It's very easy to setup. Just include `Limiter.h` in your code.
--`Limiter.h` are based on c++11, and it's thread safe
--demos are using pthread lib, when you compile it, don't forget to link pthread lib by using flag `-lpthread`
+- It's very easy to setup. Just include `Limiter.h` in your code.
+- `Limiter.h` are based on c++11, and it's thread safe
+- demos are using pthread lib, when you compile it, don't forget to link pthread lib by using flag `-lpthread`
 
 ## Example
 
@@ -42,4 +42,4 @@ int main() {
 }
 ```
 
--for more examples, please read the codes in dir `demo/`
+- for more examples, please read the codes in dir `demo/`

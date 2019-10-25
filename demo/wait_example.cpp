@@ -1,38 +1,35 @@
 /*
  * These codes below explain how to generate 3.0 tokens per second 
- * and cosume 2.0 tokens every time execute your codes with member
- * function reserve.
+ * and cosume 2.0 tokens every time execute your codes.
  */
 #include <iostream>
+#include <string>
 #include <vector>
 #include <thread>
-#include <memory>
 #include <chrono>
 
 #include "../include/Limiter.h"
 
-using std::chrono::system_clock;
-using std::chrono::seconds;
-using std::chrono::microseconds;
 using std::chrono::duration_cast;
+using std::chrono::microseconds;
+using std::chrono::seconds;
+using std::chrono::system_clock;
 
 token_bucket::Limiter* lim_p;
 
-
 void foo (int th_num) {
     for(int loop_time = 0; loop_time < 5; ) {
-        //waitN(cosume tokens num, max wait time/s )
-        std::shared_ptr<token_bucket::Reservation> reservation_p = 
-                lim_p->reserve(2.0, seconds(20));
-        if (reservation_p->get_ok()) {
-            std::this_thread::sleep_for(reservation_p->duration_to_act());
+        //wait(cosume tokens num, max wait time/s )
+        bool ok = lim_p->wait(2.0, seconds(20));
+        if (ok) {
             /*
              * write your codes here
              */
-            std::cout << "thread_num = "<< th_num 
-                    << ", loop_time = " << loop_time <<" time : " 
+            std::cout << "thread_num = " << th_num 
+                    << ", loop_time = " << loop_time 
+                    << " time : " 
                     << duration_cast<seconds>(system_clock::now().time_since_epoch()).count() 
-                    << " cosume tokens:" << reservation_p->get_tokens() << std::endl;
+                    << std::endl;
             ++loop_time;
         } else {
             //if exceed max wait time

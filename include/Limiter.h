@@ -1,12 +1,11 @@
 #pragma once
 
-#include <float.h>
-#include <math.h>
+#include <stdint.h>
+
+#include <chrono>
 #include <memory>
 #include <mutex>
-#include <stdint.h>
 #include <thread>
-#include <chrono>
 
 namespace token_bucket {
 
@@ -16,8 +15,8 @@ using std::chrono::time_point;
 using std::chrono::nanoseconds;
 
 static bool is_equal_d(double d1, double d2) {
-    static const double delta = 1e-10;
-    return fabs(d1 - d2) < delta;
+    static const double delta = 1e-20;
+    return d1 < d2 ? d2 - d1 : d1 - d2 < delta;
 }
 
 template<class T>
@@ -64,7 +63,6 @@ private:
 
 class Limiter {
 public:
-    static const double MIN_RATE;
     typedef time_point<steady_clock, nanoseconds> time_point_ns;
     Limiter(double rate, double burst);
     std::shared_ptr<Reservation> reserve(double n, const nanoseconds& max_time_to_wait);
@@ -74,14 +72,16 @@ public:
     bool set_rate(double rate);
     bool set_burst(double burst);
 
+    double tokens() {
+        return _m_tokens;
+    }
+
     double rate() {
         return _m_rate;
     }
+
     double burst() {
         return _m_burst;
-    }
-    time_point_ns last_event_time() {
-        return _m_last_event_time;
     }
 private:
     static const uint64_t POW_S_TO_NS = 1000000000;
@@ -92,6 +92,9 @@ private:
     }
 
     nanoseconds tokens_to_duration(double tokens) {
+        if (_m_rate < 0.0 || is_equal_d(_m_rate, 0.0)) {
+            return nanoseconds(0);
+        }
         return nanoseconds(static_cast<uint64_t>(tokens / _m_rate * POW_S_TO_NS));
     }
     
@@ -109,40 +112,35 @@ private:
     // last_update_time is the last time the limiter's tokens field was updated
     time_point_ns _m_last_update_time;
     // last_event_time is the latest time of a rate-limited event (past or future)
-    time_point_ns _m_last_event_time;
     std::mutex mu;
 };
-const double Limiter::MIN_RATE = DBL_MIN;
 
 Limiter::Limiter(double rate, double burst) : 
-        _m_tokens(0),
-        _m_last_update_time(),
-        _m_last_event_time() {
-    time_point_ns curr = steady_clock::now();
-    _m_last_update_time = curr;
-    _m_last_event_time = curr;
-    _m_burst = burst < 0.0 ? 0.0 : burst;
-    _m_rate = rate < 0.0 || is_equal_d(0.0, rate) ? MIN_RATE : rate;
+        _m_burst(burst), _m_tokens(0), _m_last_update_time(steady_clock::now()), mu() {
+    _m_rate = rate < 0.0 ? 0.0 : rate;
 }
 
 
+//reset rate
 bool Limiter::set_rate(double rate) {
     AutoRelease<std::mutex> autoRelease(&mu);
     update(steady_clock::now());
-    if (rate > 0 && !is_equal_d(0.0, rate)) {
+    if (rate >= 0) {
+        nanoseconds dura = tokens_to_duration(_m_tokens);
         _m_rate = rate;
+        _m_tokens = duration_to_tokens(dura);
+        _m_rate = _m_rate > _m_burst ? _m_burst : _m_rate;
         return true;
     }
     return false;
 }
+
+//reset burst
 bool Limiter::set_burst(double burst) {
     AutoRelease<std::mutex> autoRelease(&mu);
     update(steady_clock::now());
-    if (burst > 0) {
-        _m_burst = burst;
-        return true;
-    }
-    return false;
+    _m_burst = burst;
+    return true;
 }
 
 std::shared_ptr<Reservation> Limiter::reserve(double n, const nanoseconds& max_time_to_wait){
@@ -154,13 +152,12 @@ std::shared_ptr<Reservation> Limiter::reserve(double n, const nanoseconds& max_t
     }
     update(now);
 
-    if (n <= _m_burst && duration_to_tokens(max_time_to_wait) - n >= -_m_tokens) {
+    if (n >= 0 && n <= _m_burst && duration_to_tokens(max_time_to_wait) - n >= -_m_tokens) {
         //ok
         _m_tokens -= n;
         reservation_p->_m_ok = true;
         reservation_p->_m_tokens = n;
         reservation_p->_m_time_to_act = _m_tokens >= 0 ? now : tokens_to_duration(-_m_tokens) + now;
-        _m_last_event_time = reservation_p->_m_time_to_act;
     }
     return reservation_p;
 }

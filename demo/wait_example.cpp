@@ -33,7 +33,7 @@ void foo (int th_num) {
             ++loop_time;
         } else {
             //if exceed max wait time
-            std::this_thread::sleep_for(microseconds(10));
+            std::this_thread::sleep_for(microseconds(1000));
         }
     }
 }
@@ -41,7 +41,7 @@ void foo (int th_num) {
 int main() {
     //first parameter->generate n tokens per s, second parameter->burst tokens
     //means generate 3.0 tokens per s
-    //when rate <= 0, it will be set to MIN_RATE which equals DBL_MIN
+    //when rate <= 0, it will not generator tokens anymore
     lim_p = new token_bucket::Limiter(3.0, 5.0);
     std::vector<std::thread*> vec(5, nullptr);
     for (int th_num = 0; th_num < static_cast<int>(vec.size()); th_num++) {

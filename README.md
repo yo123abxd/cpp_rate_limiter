@@ -24,7 +24,7 @@ token_bucket::Limiter* lim_p;
 int main() {
     lim_p = new token_bucket::Limiter(3.0, 5.0);
     for(int loop_time = 0; loop_time < 5; ) {
-        //waitN(cosume tokens num, max wait time/s )
+        //wait(cosume tokens num, max wait time/s )
         bool ok = lim_p->wait(1.0, std::chrono::seconds(20));
         if (ok) {
             /*

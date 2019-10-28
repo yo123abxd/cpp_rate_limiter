@@ -1,5 +1,5 @@
 # token_bucket_cpp
-A C++ header-only & Cross-Platform limiter implemented by token bucket
+A C++ header-only & Cross-Platform limiter implemented with token bucket
 
 ## Quick start
 

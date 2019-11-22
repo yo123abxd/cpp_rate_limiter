@@ -1,4 +1,4 @@
-# token_bucket_cpp
+# cpp_rate_limiter
 A C++ header-only & Cross-Platform limiter implemented with token bucket
 
 ## Quick start

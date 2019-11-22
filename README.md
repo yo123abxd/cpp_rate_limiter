@@ -1,5 +1,5 @@
 # cpp_rate_limiter
-A C++ header-only & Cross-Platform limiter implemented with token bucket
+A C++11 header-only & Cross-Platform limiter implemented with token bucket
 
 ## Quick start
 

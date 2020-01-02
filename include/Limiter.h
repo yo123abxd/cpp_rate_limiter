@@ -16,7 +16,7 @@ using std::chrono::nanoseconds;
 
 static bool is_equal_d(double d1, double d2) {
     static const double delta = 1e-20;
-    return d1 < d2 ? d2 - d1 : d1 - d2 < delta;
+    return (d1 < d2 ? d2 - d1 : d1 - d2) < delta;
 }
 
 template<class T>
